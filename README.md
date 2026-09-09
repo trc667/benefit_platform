@@ -1,6 +1,6 @@
 # 校园成长权益平台 · Campus Growth
 
-[![CI](https://github.com/trc667/benifit_platform/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/trc667/benifit_platform/actions/workflows/ci.yml)
+[![CI](https://github.com/trc667/benefit_platform/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/trc667/benefit_platform/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-17+-orange.svg)](backend/pom.xml)
 [![Node](https://img.shields.io/badge/Node-18.18+-green.svg)](frontend/package.json)
