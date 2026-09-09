@@ -1,0 +1,21 @@
+# 统一换行符，避免 Windows/macOS 协作时满屏 diff
+* text=auto eol=lf
+
+# Windows 脚本必须 CRLF，否则 PowerShell 解析可能出现奇怪问题
+*.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# 二进制文件不要做换行转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+*.jar binary
+*.tgz binary
+
+# 构建产物与锁文件在 diff 里折叠
+package-lock.json -diff linguist-generated

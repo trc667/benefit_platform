@@ -1,0 +1,16 @@
+# =====================================================================
+# rpc profile：只在验证"预留的 Dubbo 接口"时启用
+#
+#   .\scripts\start-backend.ps1 -Profile rpc
+#
+# 说明：单体默认形态（dev/prod）不启动 Dubbo、不发生任何远程调用；
+#       这个 profile 只把开关打开，用于演示 @DubboService/@DubboReference
+#       的接口签名是可用的（直连模式，无注册中心）。
+#       验证完请切回 dev，不要在生产环境启用。
+# =====================================================================
+dubbo:
+  enabled: true
+
+campus:
+  rpc:
+    dubbo-enabled: true

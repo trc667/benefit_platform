@@ -1,0 +1,237 @@
+server:
+  # 默认 8090：8080 常被其他本地服务占用，避免端口冲突
+  port: 8090
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      # 强制在 Content-Type 上带 charset，避免客户端（如 PowerShell Invoke-RestMethod）
+      # 把 UTF-8 的 JSON 按 Latin-1 解码导致中文乱码
+      force-response: true
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    accept-count: 500
+    max-connections: 8192
+
+spring:
+  application:
+    name: campus-growth-api
+  profiles:
+    active: dev
+  # 本地私有配置：数据库密码、AI Key 等敏感信息写在这里，文件已在 .gitignore 中忽略。
+  # 缺失时不影响启动（optional:），环境变量优先级更高。
+  config:
+    import:
+      - optional:classpath:application-local.yml
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:campus_growth}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
+    username: ${MYSQL_USER:root}
+    # 不写默认值：本地密码放在被 gitignore 的 application-local.yml，或设置环境变量 MYSQL_PASSWORD
+    password: ${MYSQL_PASSWORD:}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: CampusGrowthHikari
+
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+          max-wait: 2000ms
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=300s
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:127.0.0.1:9092}
+    admin:
+      # Kafka 未启动时不要卡 30 秒：5 秒超时后继续启动，事件先落本地消息表
+      operation-timeout: 5s
+      fail-fast: false
+    producer:
+      acks: all
+      retries: 3
+      batch-size: 16384
+      linger-ms: 10
+      buffer-memory: 33554432
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      compression-type: lz4
+      properties:
+        # Kafka 不可用时 send() 默认阻塞 60 秒等待元数据。因为事件发送已经移到独立线程池
+        # （EventPublisher 的 afterCommit 异步派发），这里保留 10 秒上限：
+        # 既能容忍 broker 刚启动时的元数据未就绪，又不会无限阻塞发送线程。
+        # 业务线程完全不等待，事件已落本地消息表，失败由补偿任务重发。
+        max.block.ms: 10000
+        request.timeout.ms: 5000
+        delivery.timeout.ms: 15000
+    consumer:
+      group-id: campus-growth
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 100
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        # 手动提交 + 单次最多重试 3 次，失败进死信
+        max.poll.interval.ms: 300000
+        session.timeout.ms: 30000
+    listener:
+      type: batch
+      ack-mode: manual_immediate
+      concurrency: 2
+      missing-topics-fatal: false
+
+# ---------------- MyBatis-Plus ----------------
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.campus.growth.modules.*.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    # SQL 打印只在 application-dev.yml 打开：生产环境打印带参数的完整 SQL
+    # 既拖性能，也可能把敏感字段写进日志
+    cache-enabled: false
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# ---------------- 业务配置 ----------------
+campus:
+  jwt:
+    # 生产环境必须用环境变量覆盖：CAMPUS_JWT_SECRET
+    # 这里是仅供本地开发的默认值，SecurityStartupCheck 会在 prod 环境下拒绝启动并打警告
+    secret: ${CAMPUS_JWT_SECRET:campus-growth-dev-only-change-me-2026}
+    expire-minutes: 720
+    issuer: campus-growth
+  cors:
+    # 允许跨域的前端来源（逗号分隔）；生产建议由 nginx 同源代理，或改成你的域名
+    allowed-origins: ${CAMPUS_CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  auth:
+    # 登录失败锁定：连续失败 lock-threshold 次后锁定 lock-minutes 分钟
+    lock-threshold: 5
+    lock-minutes: 10
+  signin:
+    base-point: 10
+    continuous-bonus:
+      # 连续 3/7/15/30 天额外奖励
+      3: 5
+      7: 15
+      15: 30
+      30: 60
+  cache:
+    goods-ttl-seconds: 1800
+    coupon-template-ttl-seconds: 600
+    null-value-ttl-seconds: 60
+    random-jitter-percent: 10
+  limit:
+    enabled: true
+    # LOCAL = Guava 单机令牌桶；REDIS = Redis 分布式窗口计数（集群部署时切换）
+    strategy: LOCAL
+    signin-qps: 5
+    coupon-qps: 10
+    order-qps: 8
+    ai-qps: 3
+  mq:
+    enabled: true
+    outbox:
+      # 本地消息表补偿任务
+      enabled: true
+      batch-size: 100
+      max-retry: 5
+      fixed-delay-ms: 30000
+      # 单条事件发送等待上限（毫秒）：与 producer 配置配合，保证业务线程不被拖住
+      send-timeout-ms: 3000
+      # 事件发送线程池：事务提交后在独立线程发送，HTTP 请求立即返回
+      sender-core-size: 2
+      sender-max-size: 4
+      sender-queue-size: 5000
+  ai:
+    enabled: true
+    # 大模型（OpenAI 兼容协议），未配置 api-key 时自动降级为本地规则引擎
+    base-url: https://api.deepseek.com
+    api-key: ${DEEPSEEK_API_KEY:}
+    model: deepseek-chat
+    timeout-ms: 30000
+    max-history-rounds: 6
+    # 轻量模型：仅用于订单清单文案等短文本生成，HTTP 直连，短超时
+    light-model:
+      enabled: true
+      base-url: https://api.deepseek.com
+      api-key: ${DEEPSEEK_LIGHT_API_KEY:}
+      model: deepseek-chat
+      timeout-ms: 8000
+      max-tokens: 256
+  rpc:
+    # 单体阶段必须为 false：不启动 Dubbo，不进行任何远程调用
+    dubbo-enabled: false
+    dubbo-port: 20880
+
+# ---------------- Dubbo3 ----------------
+# 单体阶段必须关闭：dubbo-spring-boot-starter 的自动装配会因该开关为 false 而整体失效，
+# @DubboService 不会被扫描，也就不会启动 20880 端口、不会发起任何远程调用。
+# 需要验证预留的 RPC 接口时：--spring.profiles.active=rpc（见 application-rpc.yml）
+dubbo:
+  enabled: false
+  application:
+    name: campus-growth-api
+    qos-enable: false
+  protocol:
+    name: dubbo
+    port: 20880
+  registry:
+    # 直连模式：不注册到任何注册中心
+    address: N/A
+
+# ---------------- 监控 ----------------
+# 默认只暴露 health：/actuator/metrics 等端点不在 /api/** 下，
+# AuthInterceptor 覆盖不到，生产环境不要对外开放（dev profile 会临时放开 metrics）。
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: info
+    org.apache.kafka: warn

@@ -1,0 +1,26 @@
+# =====================================================================
+# prod profile：生产环境基线
+#   · 不打印 SQL、不暴露 metrics、健康检查不返回细节
+#   · 所有敏感配置（MYSQL_PASSWORD / CAMPUS_JWT_SECRET / DEEPSEEK_API_KEY）
+#     必须通过环境变量注入；SecurityStartupCheck 会在仍是默认 JWT 密钥时拒绝启动
+#
+# 启动：java -jar campus-growth-api.jar --spring.profiles.active=prod
+# =====================================================================
+mybatis-plus:
+  configuration:
+    # 生产环境不要打印 SQL：拖性能，且可能把敏感字段写进日志
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: warn
+    com.campus.growth: info

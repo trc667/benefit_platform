@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+# 同一分支的新提交自动取消上一次未跑完的任务，省 CI 额度
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: 后端 · 单元测试与打包
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      # 22 个单元测试都是纯逻辑测试（Base32 / 兑换码 / 锁顺序 / 最优优惠组合），
+      # 不需要 MySQL、Redis、Kafka。需要中间件的 SigninKafkaFlowTest 默认跳过，
+      # 本地用 -DrunItTests=true 才跑。
+      - name: 单元测试
+        run: mvn -B -ntp test
+
+      - name: 打包
+        run: mvn -B -ntp -DskipTests package
+
+      - name: 上传 jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: campus-growth-api
+          path: backend/target/*.jar
+          if-no-files-found: error
+
+  frontend:
+    name: 前端 · 静态校验与构建
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 安装依赖
+        run: npm ci
+
+      # verify.mjs 会检查 SFC 模板/脚本/样式结构与 import 路径是否可解析
+      - name: 静态校验
+        run: npm run verify
+
+      - name: 生产构建
+        run: npm run build

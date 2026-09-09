@@ -1,0 +1,37 @@
+# ---------------- Java / Maven ----------------
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+.mvnrepo/
+
+# ---------------- IDE ----------------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# ---------------- Node / 前端 ----------------
+node_modules/
+frontend/dist/
+frontend/.npm-cache/
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# ---------------- 运行期产物 / 本地工具 ----------------
+logs/
+*.log
+# .tools 放的是本机下载的 Kafka/Redis 数据、临时排查脚本，不属于仓库内容
+.tools/
+
+# ---------------- 敏感配置 ----------------
+# 本地覆盖配置（数据库密码、AI Key 等）不要提交
+application-local.yml
+application-local.yaml
+.env
+.env.local

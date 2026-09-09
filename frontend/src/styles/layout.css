@@ -1,0 +1,653 @@
+/* =====================================================================
+   布局与组件局部样式：管理端框架、学生端框架、卡片网格
+   层次一律靠"发丝分隔线 + 留白"，不靠阴影和色块。
+   ===================================================================== */
+
+/* ---------- 管理端：侧边栏 ---------- */
+.app-sider {
+  background: var(--cg-surface);
+  border-right: 1px solid var(--cg-border);
+  height: 100%;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-sider__logo {
+  height: var(--cg-header-h);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--cg-border-light);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.app-sider__logo-mark {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--cg-radius-sm);
+  background: var(--cg-ink);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-sider__logo-text {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: var(--cg-text-1);
+}
+
+.app-sider .el-menu {
+  border-right: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.app-sider__drawer-body {
+  padding: 0;
+}
+
+/* ---------- 管理端：顶栏 ---------- */
+.app-header {
+  height: var(--cg-header-h);
+  background: var(--cg-surface);
+  border-bottom: 1px solid var(--cg-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.app-header__trigger {
+  font-size: 17px;
+  color: var(--cg-text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.14s var(--cg-ease);
+}
+
+.app-header__trigger:hover {
+  color: var(--cg-text-1);
+}
+
+.app-header__crumb {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.app-header__user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--cg-text-2);
+  white-space: nowrap;
+  font-size: 13px;
+  padding: 4px 6px;
+  border-radius: var(--cg-radius-sm);
+  transition: background-color 0.14s var(--cg-ease);
+}
+
+.app-header__user:hover {
+  background: var(--cg-surface-2);
+}
+
+.app-header__avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--cg-jade-bg);
+  color: var(--cg-jade-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.app-main {
+  padding: 20px;
+  background: var(--cg-bg-page);
+  overflow-y: auto;
+}
+
+/* ---------- 学生端：顶部导航 ---------- */
+.stu-header {
+  height: var(--cg-header-h);
+  background: var(--cg-surface);
+  border-bottom: 1px solid var(--cg-border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.stu-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.stu-header__nav {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.stu-nav-link {
+  padding: 6px 11px;
+  border-radius: var(--cg-radius-sm);
+  color: var(--cg-text-2);
+  font-size: 13.5px;
+  white-space: nowrap;
+  transition: background-color 0.14s var(--cg-ease), color 0.14s var(--cg-ease);
+}
+
+.stu-nav-link:hover {
+  background: var(--cg-surface-2);
+  color: var(--cg-text-1);
+}
+
+.stu-nav-link.is-active {
+  background: var(--cg-surface-3);
+  color: var(--cg-text-1);
+  font-weight: 600;
+}
+
+.stu-main {
+  padding: 20px;
+  background: var(--cg-bg-page);
+  overflow-y: auto;
+}
+
+/* 窄屏底部导航 */
+.stu-tabbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .stu-tabbar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 52px;
+    background: var(--cg-surface);
+    border-top: 1px solid var(--cg-border);
+    z-index: 20;
+  }
+
+  .stu-tabbar__item {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 11px;
+    color: var(--cg-text-3);
+  }
+
+  .stu-tabbar__item.is-active {
+    color: var(--cg-jade);
+    font-weight: 600;
+  }
+
+  .stu-main {
+    padding: 14px 14px 64px;
+  }
+}
+
+/* ---------- 学生端：卡片网格 ---------- */
+.goods-grid {
+  display: block;
+}
+
+.coupon-grid .el-col {
+  display: flex;
+}
+
+/* ---------- 结算页：最优方案高亮 ---------- */
+.best-plan {
+  border: 1px solid var(--cg-jade-line);
+  border-radius: var(--cg-radius);
+  background: var(--cg-jade-bg);
+  padding: 12px 14px;
+}
+
+.best-plan__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--cg-jade);
+  border-radius: var(--cg-radius-xs);
+  padding: 1px 6px;
+}
+
+.plan-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-row + .plan-row {
+  border-top: 1px solid var(--cg-border-light);
+}
+
+/* ---------- AI 助手 ---------- */
+.ai-layout {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.ai-sessions {
+  width: 220px;
+  flex: 0 0 auto;
+  border-right: 1px solid var(--cg-border-light);
+  overflow-y: auto;
+}
+
+.ai-session-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--cg-border-light);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.14s var(--cg-ease);
+}
+
+.ai-session-item:hover {
+  background: var(--cg-surface-2);
+}
+
+.ai-session-item.is-active {
+  background: var(--cg-surface-3);
+  font-weight: 600;
+}
+
+.ai-chat {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-messages {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 18px;
+  background: var(--cg-surface-2);
+}
+
+.ai-msg {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.ai-msg--user {
+  justify-content: flex-end;
+}
+
+.ai-bubble {
+  max-width: 78%;
+  padding: 10px 13px;
+  border-radius: var(--cg-radius);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13.5px;
+}
+
+.ai-msg--user .ai-bubble {
+  background: var(--cg-ink);
+  color: #fff;
+}
+
+.ai-msg--assistant .ai-bubble {
+  background: var(--cg-surface);
+  border: 1px solid var(--cg-border);
+  color: var(--cg-text-1);
+}
+
+.ai-tool-card {
+  margin-top: 8px;
+  border: 1px solid var(--cg-border-light);
+  border-radius: var(--cg-radius-sm);
+  background: var(--cg-surface-2);
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.ai-tool-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--cg-text-2);
+}
+
+.ai-tool-card__pre {
+  margin: 6px 0 0;
+  padding: 8px;
+  background: var(--cg-surface);
+  border: 1px solid var(--cg-border-light);
+  border-radius: var(--cg-radius-xs);
+  color: var(--cg-text-2);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.ai-input {
+  border-top: 1px solid var(--cg-border-light);
+  padding: 12px 16px;
+  background: var(--cg-surface);
+}
+
+@media (max-width: 768px) {
+  .ai-sessions {
+    display: none;
+  }
+
+  .ai-bubble {
+    max-width: 88%;
+  }
+}
+
+/* ---------- 登录页：左侧墨色品牌区 + 右侧表单（不是居中一张卡） ---------- */
+.login-page {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background: var(--cg-bg-page);
+}
+
+.login-shell {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  background: var(--cg-surface);
+  border: 1px solid var(--cg-border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--cg-shadow-1);
+}
+
+.login-brand {
+  flex: 0 0 340px;
+  background: var(--cg-ink);
+  color: #fff;
+  padding: 34px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-brand__mark {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--cg-radius-sm);
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.login-brand__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+
+.login-brand__sub {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.login-brand__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.login-brand__list li {
+  position: relative;
+  padding-left: 14px;
+  line-height: 1.6;
+}
+
+.login-brand__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cg-jade);
+}
+
+.login-brand__foot {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.login-form {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 30px 28px;
+}
+
+.login-form__title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.login-form__sub {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--cg-text-3);
+}
+
+/* 演示账号：做成一张小表，而不是虚线提示框 */
+.login-tip {
+  margin-top: 18px;
+  border-top: 1px solid var(--cg-border-light);
+  padding-top: 14px;
+  font-size: 12.5px;
+  color: var(--cg-text-2);
+}
+
+.login-tip__head {
+  color: var(--cg-text-3);
+  margin-bottom: 8px;
+}
+
+.login-tip__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--cg-border-light);
+}
+
+.login-tip__row:last-child {
+  border-bottom: 0;
+}
+
+.login-tip__key {
+  color: var(--cg-text-3);
+}
+
+.login-tip__val {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--cg-text-1);
+}
+
+@media (max-width: 860px) {
+  .login-brand {
+    display: none;
+  }
+
+  .login-shell {
+    max-width: 420px;
+  }
+
+  .login-form {
+    padding: 26px 22px;
+  }
+}
+
+/* ---------- 排行榜 ---------- */
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--cg-radius-sm);
+  border: 1px solid transparent;
+}
+
+.rank-item + .rank-item {
+  margin-top: 6px;
+}
+
+.rank-item--top {
+  border-color: var(--cg-border-light);
+  background: var(--cg-surface-2);
+}
+
+.rank-item--me {
+  border-color: var(--cg-jade-line);
+  background: var(--cg-jade-bg);
+}
+
+.rank-badge {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--cg-radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--cg-text-3);
+  background: var(--cg-surface-3);
+}
+
+.rank-badge--1,
+.rank-badge--2,
+.rank-badge--3 {
+  color: #fff;
+  background: var(--cg-ink);
+}
+
+.rank-badge--1 {
+  background: var(--cg-jade);
+}
+
+/* ---------- 签到日历 ---------- */
+.signin-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.signin-grid__head {
+  text-align: center;
+  font-size: 12px;
+  color: var(--cg-text-3);
+  padding-bottom: 2px;
+}
+
+.signin-cell {
+  height: 40px;
+  border-radius: var(--cg-radius-sm);
+  border: 1px solid var(--cg-border-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--cg-text-2);
+  background: var(--cg-surface);
+}
+
+.signin-cell--signed {
+  background: var(--cg-jade-bg);
+  border-color: var(--cg-jade-line);
+  color: var(--cg-jade-deep);
+  font-weight: 600;
+}
+
+.signin-cell--today {
+  border-color: var(--cg-ink);
+  box-shadow: inset 0 0 0 1px var(--cg-ink);
+  color: var(--cg-text-1);
+}
+
+.signin-cell--future {
+  color: var(--cg-ink-4);
+  background: var(--cg-surface-2);
+}
+
+@media (max-width: 480px) {
+  .signin-cell {
+    height: 34px;
+    font-size: 11px;
+  }
+}

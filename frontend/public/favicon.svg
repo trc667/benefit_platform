@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 站点图标：墨色方块 + 青玉点，和前端主题 Ink & Jade 一致 -->
+  <rect width="32" height="32" rx="7" fill="#17181c"/>
+  <text x="16" y="22" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+        font-size="18" font-weight="600" fill="#ffffff" text-anchor="middle">校</text>
+  <circle cx="25.5" cy="6.5" r="3" fill="#0d7a5f"/>
+</svg>

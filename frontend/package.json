@@ -1,0 +1,30 @@
+{
+  "name": "campus-growth-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "校园成长权益平台前端（学生端 + 运营管理端）",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:rollup": "node scripts/build-rollup.mjs",
+    "verify": "node scripts/verify.mjs",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.7.7",
+    "element-plus": "^2.7.8",
+    "pinia": "^2.2.4",
+    "vue": "^3.4.38",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.4",
+    "vite": "^5.4.8"
+  }
+}

@@ -1,0 +1,19 @@
+# =====================================================================
+# dev profile：本地开发用
+#   · 打印 SQL（带参数），方便对着控制台排查问题
+#   · 放开 metrics 端点，便于看二级缓存命中率与线程池指标
+# 生产请用 --spring.profiles.active=prod，见 application-prod.yml
+# =====================================================================
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    com.campus.growth: debug

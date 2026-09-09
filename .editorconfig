@@ -1,0 +1,25 @@
+# 编辑器统一约定（VS Code / IntelliJ / Sublime 都认这个文件）
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Java 用 4 空格缩进（跟后端代码风格一致）
+[*.java]
+indent_size = 4
+
+# Markdown 不裁剪行尾空格（两个空格表示换行）
+[*.md]
+trim_trailing_whitespace = false
+
+# Windows 脚本用 CRLF
+[*.{ps1,psm1,cmd,bat}]
+end_of_line = crlf
+
+[*.{yml,yaml}]
+indent_size = 2

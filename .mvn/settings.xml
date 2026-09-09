@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <!--
+    国内构建加速：把 central 镜像到阿里云 https 源。
+    不设置 localRepository —— 各人用默认的 ~/.m2 即可；
+    想用仓库内目录的话自己加 -Dmaven.repo.local=.mvnrepo
+  -->
+  <mirrors>
+    <mirror>
+      <id>aliyun-public-https</id>
+      <mirrorOf>central</mirrorOf>
+      <name>aliyun public https</name>
+      <url>https://maven.aliyun.com/repository/public</url>
+    </mirror>
+  </mirrors>
+</settings>

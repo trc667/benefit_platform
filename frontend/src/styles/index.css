@@ -1,0 +1,594 @@
+/* =====================================================================
+   Ink & Jade（墨青）设计系统 —— 全局基础样式
+   ---------------------------------------------------------------------
+   为什么是这套配色：
+   后台系统的"AI 味"通常来自三件事——紫蓝渐变、到处发光的卡片、以及
+   Element Plus 默认的那套冷蓝灰（#409eff / #f5f7fa）。这套 tokens 反过来走：
+     · 底色用暖白纸感（#f7f7f5），不是冷灰，长时间看不发青；
+     · 主色用近黑墨色（#17181c），像 Linear / Vercel / GitHub 那样克制；
+     · 只留一个青玉强调色（#0d7a5f）承载"成长 / 积分 / 已完成"的语义；
+     · 边框是发丝级暖灰，阴影几乎不可见——层次靠留白和分隔线，不靠发光。
+   变量名沿用旧名（--cg-primary / --cg-text-1 等），38 个页面无需改动即可生效。
+   ===================================================================== */
+:root {
+  /* ---------- 墨色（文字 / 主按钮 / 激活态） ---------- */
+  --cg-ink: #17181c;
+  --cg-ink-2: #5c6067;
+  --cg-ink-3: #8b9098;
+  --cg-ink-4: #b6babf;
+
+  /* ---------- 青玉（成长 / 积分 / 完成态） ---------- */
+  --cg-jade: #0d7a5f;
+  --cg-jade-deep: #0a5c48;
+  --cg-jade-bg: #eaf5f1;
+  --cg-jade-line: #bfe0d5;
+
+  /* ---------- 语义色（低饱和，不用荧光色） ---------- */
+  --cg-amber: #96600a;
+  --cg-amber-bg: #fdf4e5;
+  --cg-red: #b42318;
+  --cg-red-bg: #fdecea;
+
+  /* ---------- 面与线 ---------- */
+  --cg-surface: #ffffff;
+  --cg-surface-2: #fbfbfa;
+  --cg-surface-3: #f3f3f1;
+  --cg-border: #e5e3de;
+  --cg-border-light: #edebe6;
+  --cg-border-strong: #d7d4cd;
+
+  /* ---------- 兼容旧变量名 ---------- */
+  --cg-primary: var(--cg-ink);
+  --cg-accent: var(--cg-jade);
+  --cg-text-1: var(--cg-ink);
+  --cg-text-2: var(--cg-ink-2);
+  --cg-text-3: var(--cg-ink-3);
+  --cg-bg-page: #f7f7f5;
+
+  /* ---------- 圆角与阴影（克制：小圆角 + 几乎看不见的阴影） ---------- */
+  --cg-radius-xs: 4px;
+  --cg-radius-sm: 6px;
+  --cg-radius: 8px;
+  --cg-shadow-1: 0 1px 2px rgba(23, 24, 28, 0.05);
+  --cg-shadow-2: 0 8px 24px rgba(23, 24, 28, 0.08);
+  --cg-ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* ---------- 尺寸 ---------- */
+  --cg-header-h: 56px;
+  --cg-sider-w: 216px;
+  --cg-sider-w-collapse: 64px;
+
+  /* ---------- Element Plus 变量映射 ---------- */
+  --el-color-primary: var(--cg-ink);
+  --el-color-primary-light-3: #4a4d54;
+  --el-color-primary-light-5: #797c83;
+  --el-color-primary-light-7: #c8cace;
+  --el-color-primary-light-8: #e2e3e5;
+  --el-color-primary-light-9: #f2f2f3;
+  --el-color-primary-dark-2: #000000;
+  --el-color-success: var(--cg-jade);
+  --el-color-success-light-9: var(--cg-jade-bg);
+  --el-color-warning: #b7791f;
+  --el-color-warning-light-9: var(--cg-amber-bg);
+  --el-color-danger: var(--cg-red);
+  --el-color-danger-light-9: var(--cg-red-bg);
+  --el-color-error: var(--cg-red);
+  --el-color-info: var(--cg-ink-3);
+  --el-text-color-primary: var(--cg-text-1);
+  --el-text-color-regular: var(--cg-text-2);
+  --el-text-color-secondary: var(--cg-text-3);
+  --el-text-color-placeholder: var(--cg-ink-4);
+  --el-border-color: var(--cg-border);
+  --el-border-color-light: var(--cg-border-light);
+  --el-border-color-lighter: var(--cg-border-light);
+  --el-border-color-extra-light: var(--cg-border-light);
+  --el-bg-color-page: var(--cg-bg-page);
+  --el-bg-color-overlay: var(--cg-surface);
+  --el-fill-color-blank: var(--cg-surface);
+  --el-fill-color-light: var(--cg-surface-2);
+  --el-fill-color-lighter: var(--cg-surface-2);
+  --el-border-radius-base: var(--cg-radius-sm);
+  --el-border-radius-small: var(--cg-radius-xs);
+  --el-box-shadow-light: var(--cg-shadow-1);
+  --el-box-shadow: var(--cg-shadow-2);
+  --el-transition-duration: 0.14s;
+  --el-transition-duration-fast: 0.1s;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--cg-text-1);
+  background-color: var(--cg-bg-page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 焦点可见性：键盘用户必须看得见焦点（WCAG 2.1 AA） */
+:focus-visible {
+  outline: 2px solid var(--cg-jade);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--cg-jade-bg);
+  color: var(--cg-jade-deep);
+}
+
+a {
+  color: var(--cg-text-1);
+  text-decoration: none;
+  border-bottom: 1px solid var(--cg-border-strong);
+  transition: border-color 0.14s var(--cg-ease), color 0.14s var(--cg-ease);
+}
+
+a:hover {
+  color: var(--cg-jade);
+  border-bottom-color: var(--cg-jade);
+}
+
+/* ---------- 通用容器 ---------- */
+.cg-page {
+  padding: 20px;
+}
+
+.cg-card {
+  background: var(--cg-surface);
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-radius);
+}
+
+.cg-card + .cg-card {
+  margin-top: 16px;
+}
+
+.cg-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--cg-border-light);
+  background: var(--cg-surface);
+  border-radius: var(--cg-radius) var(--cg-radius) 0 0;
+}
+
+.cg-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--cg-text-1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cg-card__body {
+  padding: 16px;
+}
+
+.cg-divider {
+  height: 1px;
+  background: var(--cg-border-light);
+  border: 0;
+  margin: 0;
+}
+
+/* 小节标题：比正文重一点，带一条短竖线做锚点 */
+.cg-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cg-text-1);
+}
+
+.cg-section-title::before {
+  content: '';
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--cg-jade);
+}
+
+/* ---------- 文本工具类 ---------- */
+.cg-text-2 {
+  color: var(--cg-text-2);
+}
+
+.cg-text-3 {
+  color: var(--cg-text-3);
+}
+
+.cg-text-primary {
+  color: var(--cg-text-1);
+  font-weight: 500;
+}
+
+.cg-text-danger {
+  color: var(--cg-red);
+}
+
+.cg-text-success {
+  color: var(--cg-jade);
+}
+
+.cg-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cg-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cg-nowrap {
+  white-space: nowrap;
+}
+
+.cg-mt-8 {
+  margin-top: 8px;
+}
+
+.cg-mt-12 {
+  margin-top: 12px;
+}
+
+.cg-mt-16 {
+  margin-top: 16px;
+}
+
+.cg-mb-12 {
+  margin-bottom: 12px;
+}
+
+.cg-mb-16 {
+  margin-bottom: 16px;
+}
+
+.cg-flex {
+  display: flex;
+}
+
+.cg-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cg-flex-center {
+  display: flex;
+  align-items: center;
+}
+
+.cg-gap-8 {
+  gap: 8px;
+}
+
+.cg-gap-12 {
+  gap: 12px;
+}
+
+/* 数值统一等宽数字：表格里上下对齐，是"真实产品"最容易被忽略的细节 */
+.cg-point {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.cg-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 键值对：标签在上、值在下，用于详情面板 */
+.cg-kv {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cg-kv__label {
+  font-size: 12px;
+  color: var(--cg-text-3);
+}
+
+.cg-kv__value {
+  font-size: 14px;
+  color: var(--cg-text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 图片占位（/img/goods/*.png 资源缺失时的兜底） ----------
+   不用渐变：纯色 + 字母，观感更接近真实的商品图占位，也不抢内容。 */
+.cg-cover {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cg-cover__char {
+  font-size: 30px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 3px;
+  user-select: none;
+}
+
+.cg-cover--STUDY {
+  background: #4a6b8a;
+}
+
+.cg-cover--FOOD {
+  background: #a8703f;
+}
+
+.cg-cover--LIFE {
+  background: #4c7a5c;
+}
+
+.cg-cover--SPORT {
+  background: #6b6a86;
+}
+
+.cg-cover--OTHER {
+  background: #75787c;
+}
+
+/* =====================================================================
+   Element Plus 细节打磨
+   ===================================================================== */
+
+/* ---------- 按钮 ---------- */
+.el-button {
+  font-weight: 500;
+  transition: background-color 0.14s var(--cg-ease), border-color 0.14s var(--cg-ease),
+    color 0.14s var(--cg-ease), transform 0.1s var(--cg-ease);
+}
+
+.el-button:active {
+  transform: translateY(1px);
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--cg-ink);
+  --el-button-border-color: var(--cg-ink);
+  --el-button-hover-bg-color: #2c2e34;
+  --el-button-hover-border-color: #2c2e34;
+  --el-button-active-bg-color: #000;
+  --el-button-active-border-color: #000;
+}
+
+.el-button--default {
+  --el-button-hover-text-color: var(--cg-ink);
+  --el-button-hover-border-color: var(--cg-border-strong);
+  --el-button-hover-bg-color: var(--cg-surface-2);
+}
+
+/* 表格里的文字按钮：去掉多余内边距，像行内操作 */
+.el-table .el-button.is-link,
+.el-table .el-button--small.is-text {
+  padding: 0 4px;
+  height: auto;
+}
+
+/* ---------- 输入类控件 ---------- */
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  box-shadow: 0 0 0 1px var(--cg-border) inset;
+  transition: box-shadow 0.14s var(--cg-ease);
+}
+
+.el-input__wrapper:hover,
+.el-select__wrapper:hover,
+.el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px var(--cg-border-strong) inset;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--cg-ink) inset, 0 0 0 3px rgba(23, 24, 28, 0.06);
+}
+
+/* ---------- 表格：去掉斑马纹和竖线，用发丝横线分隔 ---------- */
+.el-table {
+  --el-table-border-color: var(--cg-border-light);
+  --el-table-header-bg-color: var(--cg-surface-2);
+  --el-table-header-text-color: var(--cg-text-2);
+  --el-table-row-hover-bg-color: #fafaf8;
+  --el-table-text-color: var(--cg-text-1);
+  font-size: 13px;
+}
+
+.el-table th.el-table__cell {
+  background-color: var(--cg-surface-2) !important;
+  color: var(--cg-text-2);
+  font-weight: 600;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+}
+
+.el-table td.el-table__cell,
+.el-table th.el-table__cell {
+  padding: 9px 0;
+}
+
+.el-table .cell {
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+.el-table__inner-wrapper::before {
+  display: none;
+}
+
+/* ---------- 卡片 / 弹窗 ---------- */
+.el-card,
+.el-dialog,
+.el-drawer,
+.el-button,
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner,
+.el-message,
+.el-message-box,
+.el-popper {
+  border-radius: var(--cg-radius-sm);
+}
+
+.el-dialog {
+  border-radius: var(--cg-radius);
+  box-shadow: var(--cg-shadow-2);
+}
+
+.el-dialog__header {
+  margin-right: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--cg-border-light);
+}
+
+.el-dialog__title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.el-dialog__footer {
+  padding-top: 14px;
+  border-top: 1px solid var(--cg-border-light);
+}
+
+.el-card {
+  border-color: var(--cg-border);
+}
+
+/* ---------- 标签：小圆角 + 低饱和底，不用胶囊 ---------- */
+.el-tag {
+  border-radius: var(--cg-radius-xs);
+  font-weight: 500;
+}
+
+/* ---------- 分页 ---------- */
+.el-pagination {
+  --el-pagination-button-bg-color: var(--cg-surface);
+  --el-pagination-hover-color: var(--cg-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.el-pagination.is-background .el-pager li {
+  border: 1px solid var(--cg-border);
+  border-radius: var(--cg-radius-xs);
+  background: var(--cg-surface);
+}
+
+.el-pagination.is-background .el-pager li.is-active {
+  background: var(--cg-ink);
+  border-color: var(--cg-ink);
+  color: #fff;
+}
+
+/* ---------- 菜单：激活态用浅底 + 左侧短竖条，不用整块高亮色 ---------- */
+.el-menu {
+  --el-menu-active-color: var(--cg-ink);
+  --el-menu-hover-bg-color: var(--cg-surface-2);
+  --el-menu-item-height: 38px;
+  border-right: 0;
+}
+
+/* 折叠态不加左右内边距，否则图标会偏心 */
+.el-menu:not(.el-menu--collapse) {
+  padding: 6px 8px;
+}
+
+.el-menu--collapse {
+  padding: 6px 0;
+}
+
+.el-menu-item {
+  border-radius: var(--cg-radius-sm);
+  margin-bottom: 2px;
+  font-size: 13.5px;
+  position: relative;
+}
+
+.el-menu-item.is-active {
+  background: var(--cg-surface-3);
+  font-weight: 600;
+}
+
+.el-menu-item.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 14px;
+  border-radius: 0 2px 2px 0;
+  background: var(--cg-ink);
+}
+
+/* ---------- 下拉 / 气泡 ---------- */
+.el-dropdown-menu__item:not(.is-disabled):hover {
+  background: var(--cg-surface-2);
+  color: var(--cg-ink);
+}
+
+/* ---------- 弹窗在窄屏下的安全边距（配合 92% 宽度） ---------- */
+@media (max-width: 768px) {
+  .el-dialog {
+    margin-top: 6vh !important;
+  }
+
+  .el-message-box {
+    width: 88% !important;
+  }
+
+  .cg-page {
+    padding: 14px;
+  }
+}
+
+/* ---------- 滚动条：细一点，不抢视觉 ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d5d3cd;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c2bfb8;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
