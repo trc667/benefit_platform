@@ -211,6 +211,8 @@ POST /api/ai/chat  {sessionId, message}
 | 缓存雪崩 | TTL 随机抖动（±10%） | `infra/cache/TwoLevelCache` |
 | 缓存与 DB 一致 | Cache-Aside：先更新 DB 再删缓存 + 延迟双删 | `infra/cache/TwoLevelCache` |
 | 超卖/超发 | Redis 预扣 + DB 乐观锁（version）+ 唯一索引兜底 | `coupon`、`order` |
+| **账户热点行** | **原子增减** SQL（`balance = balance + ?`，余额不足判定也下推 SQL），而不是"读-改-写 + 乐观锁重试"——后者在热点行上会连环冲突，压测实测成功率仅 5% | `modules/point/service/impl/PointServiceImpl#changePoint` |
+| **幂等键作用域** | 幂等键统一加 `u:{userId}:` 前缀：幂等是"同一个人别连点"，不是"全站只准提交一次" | `common/aspect/IdempotentAspect` |
 | 接口刷量 | 两层限流 + `@Idempotent` 幂等注解 | `infra/ratelimit`、`common/aspect` |
 
 ### 6.1 事件清单（每个主题都有真实消费者）

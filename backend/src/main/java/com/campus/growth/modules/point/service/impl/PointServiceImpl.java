@@ -45,8 +45,6 @@ import java.util.List;
 public class PointServiceImpl implements PointService {
 
     /** 乐观锁冲突重试次数 */
-    private static final int MAX_RETRY = 3;
-
     /** 运营单次手动调整的绝对值上限，防手抖多打一个零 */
     private static final int MAX_ADJUST_POINT = 100_000;
 
@@ -140,6 +138,16 @@ public class PointServiceImpl implements PointService {
     /**
      * 积分变动统一入口。
      *
+     * <h3>为什么不是"读-改-写 + 乐观锁"</h3>
+     * <p>最早这里用的是「查账户 → 算新余额 → 带 version 条件更新 → 冲突重试」。
+     * 逻辑上没错，但**同一账户并发写**时（同一用户狂点兑换码、或补发奖励任务重跑）
+     * 乐观锁会连环冲突：压测 60 并发写同一账户，只有 3 次成功（5%），
+     * 其余全被重试上限挡下并抛出"积分更新冲突过于频繁"。</p>
+     *
+     * <p>改成数据库原子增减：一条 {@code UPDATE ... SET balance = balance + ?} 完成，
+     * 并发请求在行锁上排队（每个事务亚毫秒级），不再有"重试风暴"。
+     * 余额不足的判定也下推到 SQL（{@code balance + ? >= 0}），天然防止扣成负数。</p>
+     *
      * @param delta 正数加分，负数扣分
      */
     private boolean changePoint(Long userId, PointBizType bizType, String bizNo, int delta, String remark) {
@@ -153,50 +161,51 @@ public class PointServiceImpl implements PointService {
             return false;
         }
 
-        // 2. 乐观锁更新账户，冲突重试
-        for (int attempt = 1; attempt <= MAX_RETRY; attempt++) {
-            UserPointAccount account = getOrCreateAccount(userId);
-            int newBalance = account.getBalance() + delta;
-            if (newBalance < 0) {
-                throw BizException.of(ErrorCode.POINT_NOT_ENOUGH,
-                        "积分不足，当前可用 " + account.getBalance() + "，需要 " + Math.abs(delta));
-            }
-            int newEarned = account.getTotalEarned() + (delta > 0 ? delta : 0);
-            int newUsed = account.getTotalUsed() + (delta < 0 ? -delta : 0);
+        // 2. 账户不存在先初始化（并发下可能重复插入，唯一索引兜底）
+        getOrCreateAccount(userId);
 
-            LambdaUpdateWrapper<UserPointAccount> update = new LambdaUpdateWrapper<UserPointAccount>()
-                    .eq(UserPointAccount::getId, account.getId())
-                    .eq(UserPointAccount::getVersion, account.getVersion())
-                    .set(UserPointAccount::getBalance, newBalance)
-                    .set(UserPointAccount::getTotalEarned, newEarned)
-                    .set(UserPointAccount::getTotalUsed, newUsed)
-                    .set(UserPointAccount::getVersion, account.getVersion() + 1);
-            int updated = accountMapper.update(null, update);
-            if (updated == 0) {
-                log.debug("积分账户乐观锁冲突，第 {} 次重试 userId={}", attempt, userId);
-                continue;
-            }
-
-            // 3. 写流水；唯一索引冲突说明并发重复入账，抛出后整体回滚
-            PointRecord record = new PointRecord();
-            record.setUserId(userId);
-            record.setBizType(bizType.name());
-            record.setBizNo(bizNo);
-            record.setChangePoint(delta);
-            record.setBalanceAfter(newBalance);
-            record.setRemark(remark);
-            try {
-                recordMapper.insert(record);
-            } catch (DuplicateKeyException e) {
-                log.info("积分流水并发重复，回滚本次入账 userId={} bizNo={}", userId, bizNo);
-                return false;
-            }
-
-            // 4. 更新排行榜（Redis ZSet，失败不影响积分入账）
-            rankService.addScore(userId, delta);
-            return true;
+        // 3. 原子增减：一条 UPDATE 搞定，条件里带"扣完不能为负"
+        int earned = Math.max(delta, 0);
+        int used = Math.max(-delta, 0);
+        int updated = accountMapper.update(null, new LambdaUpdateWrapper<UserPointAccount>()
+                .eq(UserPointAccount::getUserId, userId)
+                .apply("balance + {0} >= 0", delta)
+                .setSql("balance = balance + " + delta)
+                .setSql("total_earned = total_earned + " + earned)
+                .setSql("total_used = total_used + " + used)
+                .setSql("version = version + 1"));
+        if (updated == 0) {
+            UserPointAccount current = getAccount(userId);
+            int balance = current == null ? 0 : current.getBalance();
+            throw BizException.of(ErrorCode.POINT_NOT_ENOUGH,
+                    "积分不足，当前可用 " + balance + "，需要 " + Math.abs(delta));
         }
-        throw BizException.of(ErrorCode.SYSTEM_ERROR, "积分更新冲突过于频繁，请稍后重试");
+
+        // 4. 当前读（同一事务内已持有行锁，代价极低）：拿到准确的 balance_after 写进流水
+        UserPointAccount fresh = accountMapper.selectOne(new LambdaQueryWrapper<UserPointAccount>()
+                .eq(UserPointAccount::getUserId, userId)
+                .last("for update"));
+        int balanceAfter = fresh == null ? 0 : fresh.getBalance();
+
+        // 5. 写流水；唯一索引冲突说明并发重复入账，整体回滚
+        PointRecord record = new PointRecord();
+        record.setUserId(userId);
+        record.setBizType(bizType.name());
+        record.setBizNo(bizNo);
+        record.setChangePoint(delta);
+        record.setBalanceAfter(balanceAfter);
+        record.setRemark(remark);
+        try {
+            recordMapper.insert(record);
+        } catch (DuplicateKeyException e) {
+            log.info("积分流水并发重复，回滚本次入账 userId={} bizNo={}", userId, bizNo);
+            // 让外层事务回滚：否则余额已经被加过，却没有对应流水
+            throw e;
+        }
+
+        // 6. 更新排行榜（Redis ZSet，失败不影响积分入账）
+        rankService.addScore(userId, delta);
+        return true;
     }
 
     @Override

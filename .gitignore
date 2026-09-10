@@ -29,6 +29,11 @@ logs/
 # .tools 放的是本机下载的 Kafka/Redis 数据、临时排查脚本，不属于仓库内容
 .tools/
 
+# ---------------- 压测 ----------------
+# 压测账号缓存（含 token）与原始结果不进仓库
+loadtest/.users.json
+loadtest/results/
+
 # ---------------- 敏感配置 ----------------
 # 本地覆盖配置（数据库密码、AI Key 等）不要提交
 application-local.yml

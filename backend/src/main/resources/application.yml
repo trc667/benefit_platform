@@ -161,7 +161,9 @@ campus:
     null-value-ttl-seconds: 60
     random-jitter-percent: 10
   limit:
-    enabled: true
+    # 压测时用环境变量关掉：$env:CAMPUS_LIMIT_ENABLED='false'
+    # 否则压到的是限流器而不是数据库/Redis 的真实能力（登录限流是按 IP 的，压测机很容易先被挡）
+    enabled: ${CAMPUS_LIMIT_ENABLED:true}
     # LOCAL = Guava 单机令牌桶；REDIS = Redis 分布式窗口计数（集群部署时切换）
     strategy: LOCAL
     signin-qps: 5

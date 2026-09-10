@@ -82,6 +82,7 @@
 | `KAFKA_BOOTSTRAP` | `127.0.0.1:9092` | Kafka 地址 |
 | `CAMPUS_JWT_SECRET` | 开发默认值 | **生产必须覆盖**；prod 环境仍用默认值会拒绝启动 |
 | `CAMPUS_CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | 允许跨域的前端来源（逗号分隔） |
+| `CAMPUS_LIMIT_ENABLED` | `true` | 压测时设为 `false`，否则压到的是限流器而不是数据库 |
 | `DEEPSEEK_API_KEY` / `DEEPSEEK_LIGHT_API_KEY` | 空 | 留空时 AI 助手走本地规则引擎（离线模式，接口/链路完全一致） |
 
 ### 3.2 业务开关（`campus.*`）
@@ -89,6 +90,7 @@
 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- |
 | `campus.limit.strategy` | `LOCAL` | 改 `REDIS` 即切换为集群分布式限流 |
+| `campus.limit.enabled` | `true` | 压测/容量测试时用 `CAMPUS_LIMIT_ENABLED=false` 关掉 |
 | `campus.auth.lock-threshold` / `lock-minutes` | `5` / `10` | 登录失败锁定阈值与锁定时长 |
 | `campus.mq.enabled` / `campus.mq.outbox.enabled` | `true` | 关掉后事件只落本地消息表、不发送 |
 | `dubbo.enabled` | `false` | **单体部署必须保持 false**；置 true 才会暴露 RPC 接口 |
@@ -231,13 +233,39 @@ $body = '{"username":"locktest","password":"wrong"}'
 > 脚本会在开头检查测试账号余额，不足时自动用 `/api/admin/point/adjust` 补到 1000，
 > 所以**可以反复跑**（下单/退款用例会真实消耗积分）。
 
+### 4.9 压测与并发正确性
+
+功能验证（22 步）证明"流程能走通"，压测证明"并发下依然对"。两者互补：
+
+```powershell
+# 1) 关掉限流重启（否则压到的是限流器；登录限流按 IP，压测机最先被挡）
+$env:CAMPUS_LIMIT_ENABLED='false'; .\scripts\start-backend.ps1
+
+# 2) 全场景压测（会自己造压测账号、券模板、兑换码批次）
+node loadtest/run.mjs --all --users 200 --stock 100
+
+# 3) 只看某一个场景
+node loadtest/run.mjs --scenario coupon --users 300 --stock 100
+node loadtest/run.mjs --scenario hotspot --codes 60
+
+# 4) 根据上次原始 JSON 重算报告（不用重新压）
+node loadtest/run.mjs --from latest
+```
+
+结果：控制台表格 + `loadtest/results/*.json` + [`docs/loadtest-report.md`](loadtest-report.md)。
+退出码 0 表示全部断言通过，2 表示有断言失败（可直接接进 CI）。
+详见 [`loadtest/README.md`](../loadtest/README.md)。
+
+> 压测前建议把 `--users` 控制在你机器能承受的范围：账号准备会真实调注册接口（第一次较慢，之后走 `loadtest/.users.json` 缓存）。
+
 ## 5. 常见问题
 
 | 现象 | 原因 / 解决 |
 | --- | --- |
 | 启动报 `UnsupportedClassVersionError` | 用了 JDK 11 编译/运行，设置 `JAVA_HOME` 到 17+ |
 | Maven 拉依赖失败 / 卡住 | 用 `-s .mvn/settings.xml`（脚本已内置），镜像必须是 **https** |
-| `Access denied for user 'root'` | 改 `application.yml` 里的数据库密码 |
+| `Access denied for user 'root'` | 密码不在 `application.yml` 里了：写进 `application-local.yml` 或设 `MYSQL_PASSWORD` |
+| 压测时大量 429 | 限流没关：`$env:CAMPUS_LIMIT_ENABLED='false'` 重启后端（登录限流是按 IP 的，压测机最先被挡） |
 | 签到成功但积分没加 | Kafka 没起 → 看 `mq_event_outbox`，起 Kafka 后自动补偿 |
 | Kafka 启动报 `The input line is too long.` | 别用 `bin\windows\*.bat`（119 个 jar 拼类路径超 cmd 8191 字符上限），用 `scripts\start-kafka.ps1` |
 | Kafka 删 topic 后 broker 起不来 | Windows 上删 topic 的目录重命名会 `AccessDeniedException`，日志目录被判 offline → broker 退出。停掉 Kafka，手动删掉 `kafka-data\` 下对应的残留分区目录再启动（本项目已不再依赖删 topic） |

@@ -39,9 +39,14 @@ public class IdempotentAspect {
         String key = SpelUtil.evaluate(idempotent.key(), method, joinPoint.getArgs());
         if (key == null || key.isBlank()) {
             key = method.getDeclaringClass().getSimpleName() + ":" + method.getName()
-                    + ":" + UserContext.userId() + ":" + Arrays.deepHashCode(joinPoint.getArgs());
+                    + ":" + Arrays.deepHashCode(joinPoint.getArgs());
         }
-        String redisKey = RedisKeyConst.idempotent(key);
+        // 统一加"用户维度"前缀：注解里的 key 通常只描述业务对象（如 goodsId+quantity），
+        // 不带用户就会让**不同用户互相把对方挡住**——压测 60 个用户同时下单同一商品时，
+        // 59 个被"请勿重复提交"拦掉就是这么来的。
+        // 幂等的语义是"同一个人别连点"，不是"全站只准提交一次"。
+        Long userId = UserContext.userId();
+        String redisKey = RedisKeyConst.idempotent((userId == null ? "anon" : "u:" + userId) + ":" + key);
         Boolean first = stringRedisTemplate.opsForValue()
                 .setIfAbsent(redisKey, "1", idempotent.ttlSeconds(), TimeUnit.SECONDS);
         if (!Boolean.TRUE.equals(first)) {
