@@ -28,4 +28,8 @@ public class RegisterDTO {
 
     @Size(max = 64, message = "学校名称不能超过 64 个字")
     private String school;
+
+    /** 邀请码：仅当 campus.auth.register.mode=INVITE 时必填 */
+    @Size(max = 32, message = "邀请码不能超过 32 位")
+    private String inviteCode;
 }

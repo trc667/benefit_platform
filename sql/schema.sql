@@ -31,7 +31,8 @@ CREATE TABLE `sys_user` (
   `deleted`         TINYINT         NOT NULL DEFAULT 0      COMMENT '逻辑删除',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`),
-  KEY `idx_student_no` (`student_no`)
+  -- 学号唯一 = 一个人一个账号（MySQL 唯一索引允许多个 NULL，未填学号不受影响）
+  UNIQUE KEY `uk_student_no` (`student_no`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '用户表';
 
 -- ---------------------------------------------------------------------

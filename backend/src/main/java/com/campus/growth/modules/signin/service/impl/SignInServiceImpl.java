@@ -75,6 +75,9 @@ public class SignInServiceImpl implements SignInService {
     private final SignInRecordMapper signInRecordMapper;
     private final SigninProperties signinProperties;
     private final EventPublisher eventPublisher;
+    /** 风控：设备维度防小号 */
+    private final com.campus.growth.infra.risk.RiskControlService riskControlService;
+
     /** 签到成功后联动任务进度（同模块内本地调用） */
     private final com.campus.growth.modules.task.service.TaskService taskService;
 
@@ -85,6 +88,9 @@ public class SignInServiceImpl implements SignInService {
     public SignInResultVO signIn(String source) {
         Long userId = UserContext.requireUserId();
         LocalDate today = LocalDate.now();
+
+        // 0. 风控：一台设备一天最多给 N 个账号签到（防"一台手机登一堆小号薅积分"）
+        riskControlService.assertSigninAllowed(userId);
 
         String monthKey = RedisKeyConst.signinMonth(PeriodKeyUtil.monthKey(today), userId);
         String yearKey = RedisKeyConst.signinYear(today.getYear(), userId);
@@ -131,6 +137,9 @@ public class SignInServiceImpl implements SignInService {
 
         // 6. 联动"每日签到"任务进度（本地方法调用，失败不影响签到本身）
         taskService.reportProgressQuietly(userId, "DAILY_SIGN_IN", 1);
+
+        // 7. 记录"该设备今天用过这个账号"，用于风控统计
+        riskControlService.markSignin(userId);
 
         long monthCount = countBits(monthKey);
         SignInResultVO vo = new SignInResultVO();

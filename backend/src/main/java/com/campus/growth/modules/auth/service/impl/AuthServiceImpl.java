@@ -19,6 +19,7 @@ import com.campus.growth.modules.point.service.PointService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,9 @@ public class AuthServiceImpl implements AuthService {
     private final PointService pointService;
     /** 完善资料后联动一次性任务（本地调用，失败不影响资料保存） */
     private final com.campus.growth.modules.task.service.TaskService taskService;
+
+    /** 注册准入策略（邀请码 / 学校白名单 / 学号格式） */
+    private final com.campus.growth.modules.auth.service.RegisterPolicy registerPolicy;
 
     /** 连续登录失败几次后锁定 */
     @Value("${campus.auth.lock-threshold:5}")
@@ -111,25 +115,45 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public LoginVO register(RegisterDTO dto) {
+        // 1. 准入策略：邀请码 / 学校白名单 / 学号格式（见 RegisterPolicy）
+        registerPolicy.validate(dto);
+
         Long exists = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getUsername, dto.getUsername()));
         if (exists != null && exists > 0) {
             throw BizException.of(ErrorCode.USERNAME_EXISTS);
         }
+
+        // 2. 学号唯一：等价于"一个人一个账号"，数据库层面还有唯一索引兜底
+        String studentNo = dto.getStudentNo() == null ? null : dto.getStudentNo().trim();
+        if (studentNo != null && !studentNo.isEmpty()) {
+            Long sameNo = userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                    .eq(SysUser::getStudentNo, studentNo));
+            if (sameNo != null && sameNo > 0) {
+                throw BizException.of(ErrorCode.STUDENT_NO_EXISTS);
+            }
+        }
+
         SysUser user = new SysUser();
         user.setUsername(dto.getUsername());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setNickname(dto.getNickname());
-        user.setStudentNo(dto.getStudentNo());
+        user.setStudentNo(studentNo);
         user.setSchool(dto.getSchool());
         user.setRole(BizConst.ROLE_STUDENT);
         user.setGrowthLevel(1);
         user.setStatus(BizConst.STATUS_ENABLED);
-        userMapper.insert(user);
+        try {
+            userMapper.insert(user);
+        } catch (DuplicateKeyException e) {
+            // 并发注册同一学号/账号：唯一索引兜底，转成明确的业务错误
+            log.info("注册唯一索引冲突 username={} studentNo={}", dto.getUsername(), studentNo);
+            throw BizException.of(ErrorCode.STUDENT_NO_EXISTS);
+        }
 
         // 注册即开积分账户，后续任何积分操作都不用再判空
         pointService.getOrCreateAccount(user.getId());
-        log.info("新用户注册成功 userId={} username={}", user.getId(), user.getUsername());
+        log.info("新用户注册成功 userId={} username={} school={}", user.getId(), user.getUsername(), user.getSchool());
         return issueToken(user);
     }
 

@@ -63,8 +63,28 @@ public final class RedisKeyConst {
     /** 登录失败计数：cg:auth:fail:{username}（防暴力破解） */
     public static final String AUTH_FAIL = PREFIX + "auth:fail:%s";
 
+    // ---------------- 风控（防小号薅羊毛） ----------------
+    /** 单 IP 每日注册计数：cg:risk:reg:ip:{yyyyMMdd}:{ip} */
+    public static final String RISK_REGISTER_IP = PREFIX + "risk:reg:ip:%s:%s";
+    /** 单设备每日注册计数：cg:risk:reg:device:{yyyyMMdd}:{deviceId} */
+    public static final String RISK_REGISTER_DEVICE = PREFIX + "risk:reg:device:%s:%s";
+    /** 单设备每日签到的**不同账号**集合：cg:risk:signin:device:{yyyyMMdd}:{deviceId} */
+    public static final String RISK_SIGNIN_DEVICE = PREFIX + "risk:signin:device:%s:%s";
+
     public static String authFail(String username) {
         return String.format(AUTH_FAIL, username);
+    }
+
+    public static String riskRegisterIp(String day, String ip) {
+        return String.format(RISK_REGISTER_IP, day, ip);
+    }
+
+    public static String riskRegisterDevice(String day, String deviceId) {
+        return String.format(RISK_REGISTER_DEVICE, day, deviceId);
+    }
+
+    public static String riskSigninDevice(String day, String deviceId) {
+        return String.format(RISK_SIGNIN_DEVICE, day, deviceId);
     }
 
     public static String signinMonth(String yyyyMM, Long userId) {

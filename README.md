@@ -233,7 +233,7 @@ node loadtest/run.mjs --all --users 200 --stock 100
 
 | 验证项 | 命令 | 结果 |
 | --- | --- | --- |
-| 后端单元测试 | `mvn test` | **24 个测试全绿**（Base32 编解码 5、兑换码算法 7、锁顺序实验 3、最优优惠组合 7；Kafka 集成测试默认跳过） |
+| 后端单元测试 | `mvn test` | **30 个测试全绿**（Base32 编解码 5、兑换码算法 7、注册准入策略 6、锁顺序实验 3、最优优惠组合 7；Kafka 集成测试默认跳过） |
 | 异步链路集成测试 | `mvn test -Dtest=SigninKafkaFlowTest -DrunItTests=true` | **2/2 通过**：`@EmbeddedKafka` 拉起真实 broker，签到 → Kafka 消费 → 积分 1850 → 排行榜 1850 |
 | 端到端接口验证 | `.\scripts\verify-e2e.ps1` | **22/22 全绿，可重复执行**：登录、签到、任务、领券、兑换码、结算、下单支付、核销、售后、二级缓存、AI、管理端、权限拦截。Kafka 启动时走真实异步链路；脚本开头自动用运营接口补足测试账号积分 |
 | 前端构建 | `npm run build` | **通过**：1747 模块，8s 出包（`element` 1.08MB / gzip 341KB） |
@@ -303,6 +303,15 @@ node loadtest/run.mjs --all --users 200 --stock 100
 | P1 | 压测无法关闭限流，登录接口按 IP 限流会先把压测机挡住 | 第一次跑压测直接 429 | `campus.limit.enabled` 支持 `CAMPUS_LIMIT_ENABLED` 环境变量覆盖 |
 | P2 | 积分流水写入冲突时 `return false` 会**吞掉异常继续提交**，导致余额已加但没流水 | 代码审查（修 P0 时顺手发现） | 改为抛出异常让整个事务回滚，保证"余额变动必有流水" |
 
+### 第六轮修复（真实资损口子：注册风控与身份校验）
+
+| 级别 | 问题 | 修复 |
+| --- | --- | --- |
+| **P0** | **注册零门槛**：`RegisterDTO` 只有账号/密码/昵称/学号/学校，没有任何身份校验。配合"签到送积分 → 兑换码 → 权益换实物"，一个人可以批量开小号把福利薅空 | 三层防护：① **注册准入策略** `campus.auth.register.mode`（`OPEN` / `INVITE` 邀请码 / `SCHOOL` 学校白名单）；② **学号唯一索引** `uk_student_no`（"一个人一个账号"的等价物，DB 层兜底）；③ **设备维度风控** `RiskControlService`——单设备每日注册 ≤2、单 IP ≤5、单设备每日签到账号数 ≤3 |
+| P1 | 没有设备标识时风控只能按 IP，会误伤同一 NAT 出口的整栋宿舍楼 | 前端生成 `X-Device-Id`（localStorage UUID，不含个人信息）随请求携带；**不传该头不会绕过校验**，服务端归入 `nodev:{ip}` 桶 |
+| P1 | 登录页不知道服务端注册策略，无法提示邀请码 | 新增公开接口 `GET /api/auth/register-config`，前端据此动态渲染邀请码输入框与学校下拉 |
+| P1 | 注册策略无测试覆盖 | 新增 `RegisterPolicyTest` 6 个用例（OPEN / INVITE / SCHOOL / 空邀请码 / 白名单 / 前端标志位），单测总数 **24 → 30** |
+
 
 ---
 
@@ -326,6 +335,7 @@ node loadtest/run.mjs --all --users 200 --stock 100
 | 项 | 现状 |
 | --- | --- |
 | 凭据管理 | 数据库密码 / JWT 密钥 / AI Key 全部走环境变量或 `application-local.yml`（已 gitignore），仓库内无明文 |
+| **注册与反薅羊毛** | 注册准入策略（邀请码 / 学校白名单）+ **学号唯一**（一个人一个账号）+ **设备维度风控**（单设备注册数、单设备签到账号数）；详见 [`docs/03-api.md`](docs/03-api.md) §1 |
 | 密码存储 | BCrypt（`PasswordEncoder`），登录失败与账号不存在返回同一提示，避免账号枚举 |
 | 鉴权 | JWT（HS 签名，`verifyWith` 验签）+ Redis 白名单可主动踢下线；`@RequireRole` + `/api/admin/**` 路径兜底两层校验 |
 | 防爆破 | 接口限流（Guava 单机 / Redis 分布式可切换）+ 账号维度失败锁定 |

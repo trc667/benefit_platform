@@ -83,6 +83,10 @@
 | `CAMPUS_JWT_SECRET` | 开发默认值 | **生产必须覆盖**；prod 环境仍用默认值会拒绝启动 |
 | `CAMPUS_CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | 允许跨域的前端来源（逗号分隔） |
 | `CAMPUS_LIMIT_ENABLED` | `true` | 压测时设为 `false`，否则压到的是限流器而不是数据库 |
+| `CAMPUS_RISK_ENABLED` | `true` | 压测时设为 `false`（压测机会被"单设备注册上限"挡住） |
+| `CAMPUS_REGISTER_MODE` | `OPEN` | 注册准入：`OPEN` / `INVITE`（要邀请码）/ `SCHOOL`（学校白名单） |
+| `CAMPUS_INVITE_CODES` | 空 | `INVITE` 模式下的邀请码，逗号分隔 |
+| `CAMPUS_ALLOWED_SCHOOLS` | 空 | `SCHOOL` 模式下的学校白名单，逗号分隔 |
 | `DEEPSEEK_API_KEY` / `DEEPSEEK_LIGHT_API_KEY` | 空 | 留空时 AI 助手走本地规则引擎（离线模式，接口/链路完全一致） |
 
 ### 3.2 业务开关（`campus.*`）
@@ -91,6 +95,8 @@
 | --- | --- | --- |
 | `campus.limit.strategy` | `LOCAL` | 改 `REDIS` 即切换为集群分布式限流 |
 | `campus.limit.enabled` | `true` | 压测/容量测试时用 `CAMPUS_LIMIT_ENABLED=false` 关掉 |
+| `campus.auth.register.mode` | `OPEN` | 注册准入策略，见 `CAMPUS_REGISTER_MODE` |
+| `campus.risk.*` | 见 application.yml | 风控阈值：单设备注册 2 / 单 IP 注册 5 / 单设备签到账号 3 |
 | `campus.auth.lock-threshold` / `lock-minutes` | `5` / `10` | 登录失败锁定阈值与锁定时长 |
 | `campus.mq.enabled` / `campus.mq.outbox.enabled` | `true` | 关掉后事件只落本地消息表、不发送 |
 | `dubbo.enabled` | `false` | **单体部署必须保持 false**；置 true 才会暴露 RPC 接口 |
@@ -238,8 +244,9 @@ $body = '{"username":"locktest","password":"wrong"}'
 功能验证（22 步）证明"流程能走通"，压测证明"并发下依然对"。两者互补：
 
 ```powershell
-# 1) 关掉限流重启（否则压到的是限流器；登录限流按 IP，压测机最先被挡）
-$env:CAMPUS_LIMIT_ENABLED='false'; .\scripts\start-backend.ps1
+# 1) 关掉限流与风控重启（否则压到的是限流器/风控；登录限流按 IP，压测机最先被挡；
+#    风控"单设备每日注册 2 个"会让造号直接失败）
+$env:CAMPUS_LIMIT_ENABLED='false'; $env:CAMPUS_RISK_ENABLED='false'; .\scripts\start-backend.ps1
 
 # 2) 全场景压测（会自己造压测账号、券模板、兑换码批次）
 node loadtest/run.mjs --all --users 200 --stock 100

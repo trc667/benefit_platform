@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { getDeviceId } from '@/utils/device'
 
 /**
  * 统一请求封装。
@@ -45,6 +46,11 @@ service.interceptors.request.use(
     const token = getToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+    // 设备号：服务端风控用它识别"一台设备开了一堆小号"（见 infra/risk/RiskControlService）
+    const deviceId = getDeviceId()
+    if (deviceId) {
+      config.headers['X-Device-Id'] = deviceId
     }
     return config
   },

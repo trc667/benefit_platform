@@ -78,10 +78,25 @@
             </el-col>
             <el-col :xs="24" :sm="12">
               <el-form-item label="学校" prop="school">
-                <el-input v-model="registerForm.school" placeholder="如 示范大学" clearable />
+                <el-select
+                  v-if="registerConfig.schools?.length"
+                  v-model="registerForm.school"
+                  placeholder="请选择学校"
+                  style="width: 100%"
+                >
+                  <el-option v-for="s in registerConfig.schools" :key="s" :label="s" :value="s" />
+                </el-select>
+                <el-input v-else v-model="registerForm.school" placeholder="如 示范大学" clearable />
               </el-form-item>
             </el-col>
           </el-row>
+          <el-form-item v-if="registerConfig.needInviteCode" label="邀请码" prop="inviteCode">
+            <el-input v-model="registerForm.inviteCode" placeholder="请输入邀请码" clearable />
+          </el-form-item>
+          <div v-if="registerConfig.needInviteCode || registerConfig.needSchool" class="login-form__hint">
+            <el-icon><InfoFilled /></el-icon>
+            <span>{{ registerConfig.needInviteCode ? '当前为定向开放注册，需要邀请码' : '仅限白名单学校注册，学号将用于身份核验' }}</span>
+          </div>
           <el-button type="primary" class="login-form__submit" :loading="loading" @click="onRegister">
             注册并登录
           </el-button>
@@ -104,16 +119,18 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Lock, User } from '@element-plus/icons-vue'
+import { InfoFilled, Lock, User } from '@element-plus/icons-vue'
+import { getRegisterConfig } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
 
 /**
  * 登录 / 注册页。对应接口：
  *   POST /api/auth/login
  *   POST /api/auth/register
+ *   GET  /api/auth/register-config   ← 注册是否要邀请码/白名单学校（服务端策略决定）
  * 登录成功后按角色分流：学生 → /student/home，运营/管理员 → /admin/dashboard。
  */
 const route = useRoute()
@@ -127,7 +144,10 @@ const loginFormRef = ref(null)
 const registerFormRef = ref(null)
 
 const loginForm = reactive({ username: '', password: '' })
-const registerForm = reactive({ username: '', password: '', nickname: '', studentNo: '', school: '' })
+const registerForm = reactive({ username: '', password: '', nickname: '', studentNo: '', school: '', inviteCode: '' })
+
+/** 注册策略（服务端下发）：OPEN 只校验格式；INVITE 要邀请码；SCHOOL 要白名单学校 */
+const registerConfig = reactive({ mode: 'OPEN', needInviteCode: false, needSchool: false, schools: [], studentNoPattern: '^[0-9]{6,20}$' })
 
 const loginRules = {
   username: [{ required: true, message: '请输入账号', trigger: 'blur' }],
@@ -144,8 +164,30 @@ const registerRules = {
     { min: 6, message: '密码至少 6 位', trigger: 'blur' }
   ],
   nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
-  studentNo: [{ required: true, message: '请输入学号', trigger: 'blur' }],
-  school: [{ required: true, message: '请输入学校', trigger: 'blur' }]
+  studentNo: [
+    { required: true, message: '请输入学号', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (!value) return callback()
+        try {
+          return new RegExp(registerConfig.studentNoPattern).test(value)
+            ? callback()
+            : callback(new Error('学号格式不正确'))
+        } catch (e) {
+          return callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  school: [{ required: true, message: '请选择或填写学校', trigger: 'change' }],
+  inviteCode: [
+    {
+      validator: (rule, value, callback) =>
+        registerConfig.needInviteCode && !value ? callback(new Error('请输入邀请码')) : callback(),
+      trigger: 'blur'
+    }
+  ]
 }
 
 /** 登录后跳转：优先回跳来源页，否则按角色分流 */
@@ -189,12 +231,34 @@ const onRegister = async () => {
     loading.value = false
   }
 }
+
+/** 拉取注册策略：决定是否显示邀请码 / 学校下拉（失败时按 OPEN 处理，不阻塞登录页） */
+onMounted(async () => {
+  try {
+    const cfg = await getRegisterConfig()
+    Object.assign(registerConfig, cfg || {})
+  } catch (e) {
+    /* 保持默认 OPEN */
+  }
+})
 </script>
 
 <style scoped>
 .login-form__submit {
   width: 100%;
   margin-top: 4px;
+}
+
+.login-form__hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -6px 0 12px;
+  padding: 8px 10px;
+  border-radius: var(--cg-radius-sm);
+  background: var(--cg-amber-bg);
+  color: var(--cg-amber);
+  font-size: 12px;
 }
 
 :deep(.el-tabs__header) {

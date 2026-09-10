@@ -147,6 +147,22 @@ campus:
     # 登录失败锁定：连续失败 lock-threshold 次后锁定 lock-minutes 分钟
     lock-threshold: 5
     lock-minutes: 10
+    # 注册准入（防批量开小号薅权益）
+    #   OPEN   = 只校验学号格式（本地演示默认）
+    #   INVITE = 必须带邀请码（内测/定向开放）
+    #   SCHOOL = 学校须在白名单内（正式上线）
+    # 生产环境用环境变量覆盖：CAMPUS_REGISTER_MODE / CAMPUS_INVITE_CODES / CAMPUS_ALLOWED_SCHOOLS
+    register:
+      mode: ${CAMPUS_REGISTER_MODE:OPEN}
+      invite-codes: ${CAMPUS_INVITE_CODES:}
+      allowed-schools: ${CAMPUS_ALLOWED_SCHOOLS:}
+      student-no-pattern: '^[0-9]{6,20}$'
+  # 设备/IP 维度风控：一台设备一天能注册几个号、能给几个账号签到
+  risk:
+    enabled: ${CAMPUS_RISK_ENABLED:true}
+    register-per-ip: 5
+    register-per-device: 2
+    signin-accounts-per-device: 3
   signin:
     base-point: 10
     continuous-bonus:

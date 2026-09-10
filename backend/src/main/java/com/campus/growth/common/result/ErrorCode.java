@@ -26,6 +26,9 @@ public enum ErrorCode {
     USERNAME_EXISTS(1004, "账号已存在"),
     TOKEN_INVALID(1005, "登录状态已失效，请重新登录"),
     USER_LOCKED(1006, "密码错误次数过多，账号已临时锁定"),
+    REGISTER_DENIED(1007, "注册受限：邀请码无效或学校不在白名单内"),
+    RISK_REJECTED(1008, "操作过于频繁，已被风控拦截，请稍后再试"),
+    STUDENT_NO_EXISTS(1009, "该学号已注册过账号"),
 
     SIGNIN_ALREADY(2001, "今天已经签到过了"),
     SIGNIN_BUSY(2002, "签到请求正在处理中，请稍后再试"),

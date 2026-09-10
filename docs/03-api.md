@@ -10,7 +10,8 @@
 | 方法 | 路径 | 说明 | 入参 | 出参 |
 | --- | --- | --- | --- | --- |
 | POST | `/api/auth/login` | 登录 | `{username,password}` | `{token,userInfo}` |
-| POST | `/api/auth/register` | 学生注册 | `{username,password,nickname,studentNo,school}` | `{token,userInfo}` |
+| POST | `/api/auth/register` | 学生注册（受准入策略与风控约束） | `{username,password,nickname,studentNo,school,inviteCode?}` | `{token,userInfo}` |
+| GET | `/api/auth/register-config` | 注册策略（公开）：前端据此决定是否渲染邀请码/学校下拉 | - | `{mode,needInviteCode,needSchool,schools,studentNoPattern}` |
 | POST | `/api/auth/logout` | 退出（清 Redis 白名单） | - | - |
 | GET | `/api/auth/me` | 当前用户 | - | `UserInfoVO` |
 | PUT | `/api/auth/profile` | 修改资料（补齐学校+学号会触发 `ONCE_PROFILE` 任务） | `{nickname,phone,studentNo,school,avatar}` | `UserInfoVO` |
@@ -21,6 +22,18 @@
 > 同一账号连续失败 5 次（`campus.auth.lock-threshold`）锁定 10 分钟（`lock-minutes`），
 > 期间返回 `code=1006`「密码错误次数过多，请 N 分钟后再试」；登录成功即清零。
 > 账号不存在与密码错误返回同一个 `1002`，避免账号枚举。
+
+> **注册准入与风控**（防"批量开小号薅权益"）：
+>
+> | 环节 | 规则 | 返回码 |
+> | --- | --- | --- |
+> | 准入策略 | `campus.auth.register.mode`：`OPEN`（只校验学号格式）/ `INVITE`（必须带有效邀请码）/ `SCHOOL`（学校须在白名单） | `1007 注册受限` |
+> | 学号唯一 | 学号是"一个人一个账号"的等价物，重复学号直接拒绝（DB 唯一索引 `uk_student_no` 兜底） | `1009 该学号已注册过账号` |
+> | 学号格式 | 默认 `^[0-9]{6,20}$` | `400 参数校验失败` |
+> | 设备/IP 风控 | 单设备每日注册 ≤ `register-per-device`（默认 2）、单 IP ≤ `register-per-ip`（默认 5）、单设备每日**签到账号数** ≤ `signin-accounts-per-device`（默认 3） | `1008 风控拦截` |
+>
+> 请求头 `X-Device-Id`（前端自动生成并携带）是风控的设备维度；**不传该头不会绕过校验**，
+> 服务端会把它归入 `nodev:{ip}` 桶。用 IP 做风控会误伤同一 NAT 出口的整栋宿舍楼，所以判据是设备。
 
 ## 2. 签到 `/signin`
 

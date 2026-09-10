@@ -8,6 +8,9 @@ export const login = (data) => request.post('/auth/login', data)
 /** 学生注册 → {token,userInfo} */
 export const register = (data) => request.post('/auth/register', data)
 
+/** 注册配置（公开）：{mode,needInviteCode,needSchool,schools,studentNoPattern} */
+export const getRegisterConfig = () => request.get('/auth/register-config')
+
 /** 退出登录（后端清 Redis 白名单） */
 export const logout = () => request.post('/auth/logout')
 

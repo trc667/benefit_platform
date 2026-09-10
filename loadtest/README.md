@@ -10,8 +10,10 @@
 ## 快速开始
 
 ```powershell
-# 1) 压测前把限流关掉（否则压到的是限流器，不是数据库）
-$env:CAMPUS_LIMIT_ENABLED='false'; .\scripts\start-backend.ps1
+# 1) 压测前关掉限流与风控（否则压到的是限流器/风控，不是数据库）
+#    - 限流：登录按 IP 5 QPS，压测机最先被挡
+#    - 风控：单设备每日注册上限 2，压测要造 200 个账号，必然被挡
+$env:CAMPUS_LIMIT_ENABLED='false'; $env:CAMPUS_RISK_ENABLED='false'; .\scripts\start-backend.ps1
 #    注意：Redis / MySQL / Kafka 都要在跑
 
 # 2) 全场景跑一遍，产出报告
